@@ -1,0 +1,70 @@
+.sidebar {
+  height: 100vh;
+  background-color: #343a40;
+  color: white;
+  position: fixed;
+  padding-top: 10px;
+  top: 56px; /* Sesuai tinggi Navbar Bootstrap */
+  left: 0;
+  bottom: 0;
+  z-index: 1000;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column; /* Ini penting untuk layout atas ke bawah */
+  transition: width 0.3s ease;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0.75rem; /* Sedikit padding vertikal tambahan */
+  color: white !important;
+  gap: 0.75rem; /* Sedikit gap tambahan */
+  transition: all 0.2s ease;
+  /* [UBAH] Menambahkan border bawah untuk setiap menu */
+}
+
+/* [UBAH] Class baru untuk tombol toggle di paling bawah */
+.toggle-button {
+  margin-top: auto; /* Mendorong tombol ini ke paling bawah */
+  justify-content: center; /* Default center saat collapsed */
+  border-bottom: none; /* Hapus border khusus untuk tombol ini */
+}
+
+/* [UBAH] Saat sidebar di-expand, dorong ikon ke kanan */
+.sidebar:not(.collapsed) .toggle-button {
+  justify-content: flex-end;
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  flex-shrink: 0; /* Mencegah ikon menyusut */
+}
+
+/* [UBAH] Container untuk label dan chevron expand/collapse */
+.nav-label-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Ini kuncinya! Mendorong chevron ke kanan */
+  overflow: hidden;
+}
+
+.nav-label {
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* [UBAH] Hapus border dari link di dalam submenu agar tidak double */
+.submenu .nav-link {
+  border-bottom: none;
+  padding: 0.5rem 0.75rem;
+}
+
+.border-menu {
+  border-bottom: 1px solid #495057;
+}
