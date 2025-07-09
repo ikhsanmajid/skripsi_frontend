@@ -5,13 +5,12 @@ import { Nav } from "react-bootstrap"
 import { useRouter } from "next/navigation"
 import {
   House,
-  Info,
   ChevronLeft,
   ChevronRight,
   Gear,
   People,
   Cpu,
-  DoorClosed, // [UBAH] Import ChevronDown atau gunakan ChevronRight
+  DoorClosed,
 } from "react-bootstrap-icons"
 import { motion, AnimatePresence } from "framer-motion"
 import "./styles.css"
@@ -52,7 +51,6 @@ export default function Sidebar({
       animate={{ width: collapsed ? 60 : 240 }}
       transition={{ duration: 0.3 }}
     >
-      {/* [UBAH] Toggle dipindahkan ke bawah agar border-bottom tidak memengaruhinya */}
       <Nav className="flex-column p-2">
 
         <Nav.Link onClick={toggleCollapse} className="text-white nav-link mb-2 d-flex justify-content-end">
@@ -78,14 +76,13 @@ export default function Sidebar({
         </Nav.Link>
 
         {/* ===== Master Data ===== */}
-        {/* [UBAH] Struktur Nav.Link Master Data diubah total */}
         <Nav.Link onClick={handleToggleMaster} className="text-white nav-link border-menu">
           <div className="nav-icon"><Gear /></div>
           <AnimatePresence>
             {!collapsed && (
               <motion.div
                 key="master-label-container"
-                className="nav-label-container" // Container baru untuk label dan chevron
+                className="nav-label-container"
                 variants={labelVariants}
                 initial="hidden"
                 animate="visible"
@@ -101,7 +98,6 @@ export default function Sidebar({
           </AnimatePresence>
         </Nav.Link>
 
-        {/* Sub-menu dengan animasi */}
         <AnimatePresence>
           {!collapsed && openMaster && (
             <motion.div key="submenu-master" className="ms-4 submenu" variants={submenuVariants} initial="hidden" animate="visible" exit="hidden" transition={{ duration: 0.3, ease: "easeInOut" }}>
@@ -124,7 +120,7 @@ export default function Sidebar({
         </AnimatePresence>
 
         {/* About */}
-        <Nav.Link onClick={() => router.push("/about")} className="text-white nav-link border-menu">
+        {/* <Nav.Link onClick={() => router.push("/about")} className="text-white nav-link border-menu">
           <div className="nav-icon"><Info /></div>
           <AnimatePresence>
             {!collapsed && (
@@ -133,7 +129,7 @@ export default function Sidebar({
               </motion.span>
             )}
           </AnimatePresence>
-        </Nav.Link>
+        </Nav.Link> */}
       </Nav>
     </motion.div>
   )
