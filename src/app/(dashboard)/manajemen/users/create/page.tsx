@@ -10,4 +10,5 @@ export default async function HalamanTambahUser() {
     }
 
     return <UserCreatePage />
+    
 }
