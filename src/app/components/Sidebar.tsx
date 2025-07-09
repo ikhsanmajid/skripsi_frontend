@@ -11,9 +11,11 @@ import {
   People,
   Cpu,
   DoorClosed,
+  PersonLock
 } from "react-bootstrap-icons"
 import { motion, AnimatePresence } from "framer-motion"
 import "./styles.css"
+import { useSession } from "next-auth/react"
 
 export default function Sidebar({
   collapsed,
@@ -24,6 +26,7 @@ export default function Sidebar({
 }) {
   const router = useRouter()
   const [openMaster, setOpenMaster] = useState(false)
+  const { data: session } = useSession()
 
   useEffect(() => {
     if (collapsed) {
@@ -115,6 +118,12 @@ export default function Sidebar({
                 <div className="nav-icon"><DoorClosed size={18} /></div>
                 <span className="nav-label">Ruangan</span>
               </Nav.Link>
+
+              {session?.user.role === "ADMIN" && <Nav.Link onClick={() => router.push("/manajemen/users-login")} className="text-white nav-link">
+                <div className="nav-icon"><PersonLock size={18} /></div>
+                <span className="nav-label">User Login</span>
+              </Nav.Link>}
+
             </motion.div>
           )}
         </AnimatePresence>

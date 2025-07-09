@@ -3,19 +3,19 @@
 import { 
     Button, 
     Spinner, 
-    Modal
+    Modal,
 } from "react-bootstrap"
 import { ExclamationTriangleFill } from "react-bootstrap-icons"
-import { type Room } from "../page"
+import { type User } from "../page"
 
-export const DeleteConfirmationModal = ({ show, onHide, onConfirm, item, isDeleting }: {
+export const UserDeleteModal = ({ show, onHide, onConfirm, user, isDeleting }: {
     show: boolean,
     onHide: () => void,
     onConfirm: () => void,
-    item: Room | null,
+    user: User | null,
     isDeleting: boolean
 }) => {
-    if (!item) return null;
+    if (!user) return null;
 
     return (
         <Modal show={show} onHide={onHide} centered backdrop="static">
@@ -26,7 +26,7 @@ export const DeleteConfirmationModal = ({ show, onHide, onConfirm, item, isDelet
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                Apakah Anda yakin ingin menghapus ruangan: <strong>{item.name}</strong>?
+                Apakah Anda yakin ingin menghapus pengguna: <strong>{user.name}</strong>?
                 <br />
                 <span className="text-danger">Tindakan ini tidak dapat dibatalkan.</span>
             </Modal.Body>
@@ -35,7 +35,7 @@ export const DeleteConfirmationModal = ({ show, onHide, onConfirm, item, isDelet
                     Batal
                 </Button>
                 <Button variant="danger" onClick={onConfirm} disabled={isDeleting}>
-                    {isDeleting ? <Spinner as="span" animation="border" size="sm" /> : 'Ya, Hapus'}
+                    {isDeleting ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Ya, Hapus'}
                 </Button>
             </Modal.Footer>
         </Modal>

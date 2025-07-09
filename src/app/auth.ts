@@ -9,10 +9,13 @@ class InvalidLoginError extends CredentialsSignin {
     code = "Username atau Password salah"
 }
 
+class InactiveLoginError extends CredentialsSignin {
+    code = "User Tidak Aktif"
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
     session: {
-        strategy: "jwt",
-        maxAge: 60 * 60 * 2,
+        strategy: "jwt"
     },
     providers: [
         Credentials({
@@ -40,12 +43,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         id: user.data.user.id,
                         username: user.data.user.username,
                         role: user.data.user.role,
-                        access_token: user.data.access_token
+                        access_token: user.data.access_token,
+                        expires_at: user.data.expires_at
                     }
                 }
 
-                if (user.data.status == "error") {
+                console.log("eror: ", user.data.status)
+
+                if (user.data.status == "error" && user.data.message != "User Tidak Aktif") {
                     throw new InvalidLoginError()
+                }
+
+                else if (user.data.status == "error" && user.data.message == "User Tidak Aktif") {
+                    throw new InactiveLoginError()
                 }
 
                 return null
@@ -60,6 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.username = user.username!;
                 token.is_active = user.is_active!;
                 token.role = user.role!;
+                token.expires_at = user.expires_at!;
             }
 
             return token
@@ -75,6 +86,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 session.user.username = token.username;
                 session.user.role = token.role;
                 session.user.is_active = token.is_active;
+                session.user.expires_at = token.expires_at as string;
             }
 
             return session

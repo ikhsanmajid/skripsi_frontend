@@ -5,7 +5,7 @@ export default async function Home() {
   const session = await auth()
 
   if (session == null) {
-    redirect("/login")
+    redirect(`/login?next=${encodeURIComponent("/")}`)
   } else {
     redirect("/home")
   }

@@ -1,14 +1,16 @@
 import 'next-auth';
 import 'next-auth/jwt';
+import { DefaultJWT } from 'next-auth/jwt';
 
 // Deklarasikan tipe untuk properti yang Anda tambahkan ke objek JWT
 declare module 'next-auth/jwt' {
-  interface JWT {
+  interface JWT extends DefaultJWT {
     id: number;
     username: string;
     role: string;
     is_active: boolean;
     access_token: string;
+    expires_at: string;
   }
 }
 
@@ -21,6 +23,7 @@ declare module 'next-auth' {
       role: string;
       is_active: boolean;
       access_token: string;
+      expires_at: string;
     } & DefaultSession['user']; // Gabungkan dengan tipe user default jika masih dibutuhkan
   }
 
@@ -31,5 +34,6 @@ declare module 'next-auth' {
     role: string;
     is_active?: boolean; // Jadikan opsional jika tidak selalu ada
     access_token: string;
+    expires_at: string;
   }
 }

@@ -21,6 +21,7 @@ import {
 } from "react-bootstrap"
 import { PencilSquare, Trash, Search, DoorClosedFill } from "react-bootstrap-icons"
 import { ToastContainer, toast } from 'react-toastify'
+import { useSession } from "next-auth/react"
 import 'react-toastify/dist/ReactToastify.css'
 
 import { RoomModal } from "./_components/RoomAddEditModal"
@@ -68,6 +69,8 @@ export default function RoomsPage() {
     const [itemToDelete, setItemToDelete] = useState<Room | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const { data: session } = useSession()
 
     const { mutate } = useSWRConfig();
     
@@ -149,13 +152,13 @@ export default function RoomsPage() {
                 size: 120,
                 cell: ({ row }) => (
                     <div className="d-flex gap-2">
-                        <Button variant="outline-warning" size="sm" title="Edit Ruangan" onClick={() => {
+                        <Button disabled={session?.user.role !== "ADMIN"} variant="outline-warning" size="sm" title="Edit Ruangan" onClick={() => {
                             setItemToEdit(row.original);
                             setShowModal(true);
                         }}>
                             <PencilSquare />
                         </Button>
-                        <Button variant="outline-danger" size="sm" title="Hapus Ruangan" onClick={() => {
+                        <Button disabled={session?.user.role !== "ADMIN"} variant="outline-danger" size="sm" title="Hapus Ruangan" onClick={() => {
                             setItemToDelete(row.original);
                             setShowDeleteModal(true);
                         }}>
@@ -188,7 +191,7 @@ export default function RoomsPage() {
                     <h4 className="mb-0">Manajemen Ruangan</h4>
                 </Col>
                 <Col xs="auto">
-                    <Button variant="primary" onClick={() => {
+                    <Button disabled={session?.user.role !== "ADMIN"} variant="primary" onClick={() => {
                         setItemToEdit(null);
                         setShowModal(true);
                     }}>
