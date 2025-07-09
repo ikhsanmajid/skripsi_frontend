@@ -1,0 +1,10 @@
+.table th,
+.table td {
+  vertical-align: middle !important;
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+}

@@ -16,7 +16,7 @@ const loginSchema = z.object({
 
 export default function LoginForm() {
     const params = useSearchParams()
-    const codeParams = params.get("code")
+    const codeParams = params.get("code") || ""
     const nextUrl = params.get("next") || ""
     const host = process.env.NEXT_PUBLIC_ABSOLUTE_URL! as string
     const router = useRouter()
@@ -35,9 +35,11 @@ export default function LoginForm() {
                 ...values,
                 redirect: false,
             })
+            
+            console.log("error: ",res.code)
 
             if (res?.error) {
-                toast.error("Username atau password salah", {
+                toast.error(res.code, {
                     position: "top-center",
                     autoClose: 1500,
                     closeButton: false,

@@ -23,6 +23,7 @@ import { PencilSquare, Trash, Search, TagFill } from "react-bootstrap-icons"
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import api from "@/lib/axios"
+import { useSession } from "next-auth/react"
 import { RfidAddModal } from "./_components/RFIDAddModal"
 import { RfidEditModal } from "./_components/RFIDEditModal"
 import { DeleteConfirmationModal } from "./_components/DeleteConfirmationModal"
@@ -69,6 +70,8 @@ export default function RfidPage() {
     const [isDeleting, setIsDeleting] = useState(false)
 
     const { mutate } = useSWRConfig()
+
+    const { data: session } = useSession()
 
     const swrKey = useMemo(() => {
         const params = new URLSearchParams({
@@ -153,13 +156,13 @@ export default function RfidPage() {
                 size: 120,
                 cell: ({ row }) => (
                     <div className="d-flex gap-2">
-                        <Button variant="outline-warning" size="sm" title="Edit RFID" onClick={() => {
+                        <Button disabled={session?.user.role !== "ADMIN"} variant="outline-warning" size="sm" title="Edit RFID" onClick={() => {
                             setItemToEdit(row.original)
                             setShowEditModal(true)
                         }}>
                             <PencilSquare />
                         </Button>
-                        <Button variant="outline-danger" size="sm" title="Hapus RFID" onClick={() => {
+                        <Button disabled={session?.user.role !== "ADMIN"} variant="outline-danger" size="sm" title="Hapus RFID" onClick={() => {
                             setItemToDelete(row.original)
                             setShowDeleteModal(true)
                         }}>
@@ -192,7 +195,7 @@ export default function RfidPage() {
                     <h4 className="mb-0">Manajemen RFID</h4>
                 </Col>
                 <Col xs="auto">
-                    <Button variant="primary" onClick={() => setShowAddModal(true)}>
+                    <Button disabled={session?.user.role !== "ADMIN"} variant="primary" onClick={() => setShowAddModal(true)}>
                         <TagFill className="me-2" />
                         Tambah RFID
                     </Button>
