@@ -1,77 +1,52 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { 
-    Container, 
-    Card, 
-    Form, 
-    Row, 
-    Col, 
-    Button, 
-    Spinner, 
-    Image 
+import {
+    Container,
+    Card,
+    Form,
+    Row,
+    Col,
+    Button,
+    Spinner,
 } from "react-bootstrap"
-import { PersonPlusFill, ArrowLeft, CloudUpload } from "react-bootstrap-icons"
+import { PersonPlusFill, ArrowLeft } from "react-bootstrap-icons"
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { z } from "zod"
 
 import api from "@/lib/axios"
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; 
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-
 const userCreateSchema = z.object({
-  name: z.string().min(1, "Nama wajib diisi"),
-  emp_number: z.string().regex(/^\d{5}$/, "No. Karyawan harus 5 digit angka"),
-  image: z
-    .any()
-    .refine((file) => file === null || file instanceof File, "Input tidak valid.")
-    .refine((file) => file === null || file.size <= MAX_FILE_SIZE, `Ukuran gambar maksimal 5MB.`)
-    .refine(
-      (file) => file === null || ACCEPTED_IMAGE_TYPES.includes(file.type),
-      "Hanya format .jpg, .jpeg, .png dan .webp yang didukung."
-    )
-    .optional(),
+    username: z.string().min(8, "Username minimal 8 karakter"),
+    password: z.string()
+        .min(8, "Password minimal 8 karakter")
+        .regex(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+            "Password harus mengandung huruf besar, huruf kecil, angka, dan simbol"
+        ),
+    role: z.enum(["ADMIN", "AUDITOR"], {message: "Wajib pilih satu"})
 });
 
 
-export default function UserCreatePage() {
+export default function UserLoginCreatePage() {
     const router = useRouter()
-    const [formData, setFormData] = useState({ name: '', emp_number: '' })
-    const [imageFile, setImageFile] = useState<File | null>(null)
-    const [imagePreview, setImagePreview] = useState<string | null>(null)
+    const [formData, setFormData] = useState({ username: '', password: '', role: '' })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [errors, setErrors] = useState<Record<string, string | undefined>>({});
-    const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0] || null;
-        setImageFile(file)
-        
-        if (imagePreview) {
-            URL.revokeObjectURL(imagePreview)
-        }
-        
-        if (file) {
-            const previewUrl = URL.createObjectURL(file)
-            setImagePreview(previewUrl)
-            setErrors(prev => ({ ...prev, image: undefined }));
-        } else {
-            setImagePreview(null)
-        }
-    }
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setErrors({}); 
+        setErrors({});
 
         const validationResult = userCreateSchema.safeParse({
-            name: formData.name,
-            emp_number: formData.emp_number,
-            image: imageFile,
+            username: formData.username,
+            password: formData.password,
+            role: formData.role,
         });
 
         if (!validationResult.success) {
@@ -87,15 +62,14 @@ export default function UserCreatePage() {
         const toastId = toast.loading("Menambahkan pengguna baru...")
 
         const payload = new FormData()
-        payload.append('name', formData.name)
-        payload.append('emp_number', formData.emp_number)
-        if (imageFile) {
-            payload.append('image', imageFile)
-        }
+        payload.append('username', formData.username)
+        payload.append('password', formData.password)
+        payload.append('role', formData.role)
+        payload.append('is_active', "true")
 
         try {
-            const response = await api.post('/users/create', payload, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+            const response = await api.post('/users_login/register', payload, {
+                headers: { 'Content-Type': 'application/json' }
             })
 
             if (response.data && response.data.status === 'success') {
@@ -106,12 +80,8 @@ export default function UserCreatePage() {
                     autoClose: 3000
                 })
 
-                if (imageFile && response.data.fileMsg) {
-                    toast.warn(response.data.fileMsg, { autoClose: 5000 })
-                }
-
                 setTimeout(() => {
-                    router.push('/manajemen/users')
+                    router.push('/manajemen/users-login')
                 }, 1500)
 
             } else {
@@ -120,7 +90,7 @@ export default function UserCreatePage() {
 
         } catch (err: any) {
             const apiResponse = err.response?.data;
-            
+
             if (apiResponse?.zodErrors) {
                 const backendErrors: Record<string, string> = {};
                 apiResponse.zodErrors.forEach((error: { path: string, message: string }) => {
@@ -158,71 +128,68 @@ export default function UserCreatePage() {
             <Card className="shadow-sm">
                 <Form noValidate onSubmit={handleSubmit}>
                     <Card.Body>
-                        <p className="text-muted">Isi detail pengguna baru di bawah ini. Foto bersifat opsional dan dapat ditambahkan nanti.</p>
-                        <hr/>
+                        <p className="text-muted">Isi detail pengguna baru di bawah ini.</p>
+                        <hr />
                         <Form.Group as={Row} className="mb-3" controlId="formName">
-                            <Form.Label column sm={3} md={2} className="fw-semibold">Nama</Form.Label>
+                            <Form.Label column sm={3} md={2} className="fw-semibold">Username</Form.Label>
                             <Col sm={9} md={10}>
                                 <Form.Control
                                     type="text"
-                                    placeholder="Masukkan nama lengkap"
-                                    value={formData.name}
+                                    placeholder="Masukkan username"
+                                    value={formData.username}
                                     onChange={e => {
-                                        setFormData(p => ({ ...p, name: e.target.value }));
-                                        setErrors(p => ({ ...p, name: undefined }));
+                                        setFormData(p => ({ ...p, username: e.target.value }));
+                                        setErrors(p => ({ ...p, username: undefined }));
                                     }}
                                     required
                                     disabled={isSubmitting}
-                                    isInvalid={!!errors.name}
+                                    isInvalid={!!errors.username}
                                 />
-                                <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
+                                <Form.Control.Feedback type="invalid">{errors.username}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
 
                         <Form.Group as={Row} className="mb-3" controlId="formEmpNumber">
-                            <Form.Label column sm={3} md={2} className="fw-semibold">No. Karyawan</Form.Label>
+                            <Form.Label column sm={3} md={2} className="fw-semibold">Password</Form.Label>
                             <Col sm={9} md={10}>
                                 <Form.Control
-                                    type="text"
-                                    placeholder="Masukkan nomor karyawan"
-                                    value={formData.emp_number}
-                                    maxLength={5}
+                                    type="password"
+                                    placeholder="Masukkan Password"
+                                    value={formData.password}
                                     onChange={e => {
-                                        setFormData(p => ({ ...p, emp_number: e.target.value }));
-                                        setErrors(p => ({ ...p, emp_number: undefined }));
+                                        setFormData(p => ({ ...p, password: e.target.value }));
+                                        setErrors(p => ({ ...p, password: undefined }));
                                     }}
                                     required
                                     disabled={isSubmitting}
-                                    isInvalid={!!errors.emp_number}
+                                    isInvalid={!!errors.password}
                                 />
-                                <Form.Control.Feedback type="invalid">{errors.emp_number}</Form.Control.Feedback>
+                                <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
 
-                        <Form.Group as={Row} className="mb-3" controlId="formImage">
-                            <Form.Label column sm={3} md={2} className="fw-semibold">Foto Wajah</Form.Label>
+                        <Form.Group as={Row} className="mb-3" controlId="formRole">
+                            <Form.Label column sm={3} md={2} className="fw-semibold">Role</Form.Label>
                             <Col sm={9} md={10}>
-                                <Form.Control
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    ref={fileInputRef}
-                                    className="d-none"
+                                <Form.Select
+                                    value={formData.role}
+                                    onChange={e => {
+                                        setFormData(p => ({ ...p, role: e.target.value }));
+                                        setErrors(p => ({ ...p, role: undefined }));
+                                    }}
+                                    required
                                     disabled={isSubmitting}
-                                    isInvalid={!!errors.image}
-                                />
-                                <Button variant="outline-secondary" onClick={() => fileInputRef.current?.click()} disabled={isSubmitting}>
-                                    <CloudUpload className="me-2" />
-                                    {imageFile ? "Ganti Gambar..." : "Pilih Gambar..."}
-                                </Button>
-                                <Form.Control.Feedback type="invalid" className="d-block">{errors.image}</Form.Control.Feedback>
-                                {imagePreview && (
-                                    <div className="mt-3">
-                                        <Image alt="Image Preview" src={imagePreview} thumbnail style={{ maxWidth: '150px' }} />
-                                    </div>
-                                )}
+                                    isInvalid={!!errors.role} 
+                                >
+                                    <option value="">Pilih role...</option>
+                                    <option value="ADMIN">Admin</option>
+                                    <option value="AUDITOR">Auditor</option>
+                                </Form.Select>
+                                <Form.Control.Feedback type="invalid">{errors.role}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
+
+
 
                     </Card.Body>
                     <Card.Footer className="text-end">

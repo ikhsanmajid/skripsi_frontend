@@ -37,6 +37,8 @@ api.interceptors.response.use(
                     window.location.href = `/login?code=session_expired&next=${encodeURIComponent(window.location.pathname)}`;
                 });
             }
+        } else if(error.code == "ERR_NETWORK") {
+            window.location.href = `/server-offline?next=${encodeURIComponent(window.location.pathname)}`;
         }
         
         return Promise.reject(error);

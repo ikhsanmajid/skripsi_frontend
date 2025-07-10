@@ -119,10 +119,10 @@ export default function Sidebar({
                 <span className="nav-label">Ruangan</span>
               </Nav.Link>
 
-              {session?.user.role === "ADMIN" && <Nav.Link onClick={() => router.push("/manajemen/users-login")} className="text-white nav-link">
+              <Nav.Link onClick={() => router.push("/manajemen/users-login")} className="text-white nav-link">
                 <div className="nav-icon"><PersonLock size={18} /></div>
                 <span className="nav-label">User Login</span>
-              </Nav.Link>}
+              </Nav.Link>
 
             </motion.div>
           )}

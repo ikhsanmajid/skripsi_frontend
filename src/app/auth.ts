@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { CredentialsSignin } from "next-auth"
@@ -13,6 +13,10 @@ class InactiveLoginError extends CredentialsSignin {
     code = "User Tidak Aktif"
 }
 
+class OtherLoginError extends CredentialsSignin {
+    code = "Server Error. Coba beberapa saat lagi."
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
     session: {
         strategy: "jwt"
@@ -24,41 +28,48 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 password: {}
             },
             authorize: async (credentials) => {
+                try {
+                    const user = await axios.post(`${apiURI}/login`,
+                        {
+                            username: credentials?.username,
+                            password: credentials?.password
+                        }, {
+                        headers: { "Content-Type": "application/json" },
+                        validateStatus: (status) => {
+                            return status >= 200 && status < 500
+                        }
 
-                const user = await axios.post(`${apiURI}/login`,
-                    {
-                        username: credentials?.username,
-                        password: credentials?.password
-                    }, {
-                    headers: { "Content-Type": "application/json" },
+                    })
 
-                })
+                    const isOk = (user.status == 200 && user.data.status == "success") ? true : false
 
-                //console.log("data axios", user)
+                    if (isOk) {
+                        return {
+                            id: user.data.user.id,
+                            username: user.data.user.username,
+                            role: user.data.user.role,
+                            access_token: user.data.access_token,
+                            expires_at: user.data.expires_at
+                        }
+                    }
 
-                const isOk = (user.status == 200 && user.data.status == "success") ? true : false
+                    if (user.data.status == "error" && user.data.message != "User Tidak Aktif") {
+                        throw new InvalidLoginError()
+                    }
 
-                if (isOk) {
-                    return {
-                        id: user.data.user.id,
-                        username: user.data.user.username,
-                        role: user.data.user.role,
-                        access_token: user.data.access_token,
-                        expires_at: user.data.expires_at
+                    else if (user.data.status == "error" && user.data.message == "User Tidak Aktif") {
+                        throw new InactiveLoginError()
+                    }
+
+                    return null
+                } catch (e) {
+                    if (e instanceof AxiosError) {
+                        throw new OtherLoginError()
+                    } else {
+                        throw e
                     }
                 }
 
-                console.log("eror: ", user.data.status)
-
-                if (user.data.status == "error" && user.data.message != "User Tidak Aktif") {
-                    throw new InvalidLoginError()
-                }
-
-                else if (user.data.status == "error" && user.data.message == "User Tidak Aktif") {
-                    throw new InactiveLoginError()
-                }
-
-                return null
             }
         })
     ],

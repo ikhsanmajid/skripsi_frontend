@@ -9,18 +9,18 @@ import {
     ColumnDef,
 } from "@tanstack/react-table"
 import useSWR, { useSWRConfig } from "swr"
-import { 
-    Button, 
-    Table, 
-    Form, 
-    Row, 
-    Col, 
-    Spinner, 
-    Card, 
+import {
+    Button,
+    Table,
+    Form,
+    Row,
+    Col,
+    Spinner,
+    Card,
     InputGroup,
 } from "react-bootstrap"
 import { useRouter } from "next/navigation"
-import { PencilSquare, Trash, Search, InfoCircleFill, PersonPlusFill } from "react-bootstrap-icons"
+import { PencilSquare, Trash, Search, PersonPlusFill } from "react-bootstrap-icons"
 import { ToastContainer, toast } from 'react-toastify'
 import { UserEditModal } from "./_components/UserEditModal"
 import { UserDeleteModal } from "./_components/UserDeleteModal"
@@ -29,8 +29,8 @@ import 'react-toastify/dist/ReactToastify.css'
 
 
 import api from "@/lib/axios"
-import UserDetailModal from "./_components/UserDetailModal"
 import { useSession } from "next-auth/react"
+import { AxiosError } from "axios"
 
 
 const useDebounce = <T,>(value: T, delay: number): T => {
@@ -41,14 +41,20 @@ const useDebounce = <T,>(value: T, delay: number): T => {
     }, [value, delay])
     return debouncedValue
 }
+export enum Role {
+    "ADMIN",
+    "AUDITOR"
+}
 
 export type User = {
     id: number
-    emp_number: string
-    name: string
+    username: string
+    password: string,
+    role: Role,
     is_active: boolean
-    face_directory: string | null
 }
+
+
 
 const fetchUsers = async (url: string) => {
     try {
@@ -58,20 +64,24 @@ const fetchUsers = async (url: string) => {
             total: data.count,
         }
     } catch (error) {
-        console.error("Gagal memuat pengguna:", error)
-        toast.error("Gagal memuat data pengguna.")
+        if (error instanceof AxiosError) {
+            if (error.status === 403) {
+                toast.error("error.response?.data.message")
+            }
+        } else {
+            console.error("Gagal memuat pengguna:", error)
+            toast.error("Gagal memuat data pengguna.")
+        }
+
         return { data: [], total: 0 }
     }
 }
 
 export default function UsersPage() {
     const router = useRouter()
-    const [filters, setFilters] = useState({ keyword: "", isActive: null as boolean | null })
+    const [filters, setFilters] = useState({ keyword: "", role: null as string | null, isActive: null as boolean | null })
     const debouncedKeyword = useDebounce(filters.keyword, 500)
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
-
-    const [detailId, setDetailId] = useState<number | null>(null)
-    const [showDetailModal, setShowDetailModal] = useState(false)
 
     const [userToEdit, setUserToEdit] = useState<User | null>(null)
     const [showEditModal, setShowEditModal] = useState(false)
@@ -82,7 +92,7 @@ export default function UsersPage() {
 
     const { mutate } = useSWRConfig()
 
-    const {data: session} = useSession()
+    const { data: session } = useSession()
 
     const swrKey = useMemo(() => {
         const params = new URLSearchParams({
@@ -91,8 +101,9 @@ export default function UsersPage() {
         })
         if (debouncedKeyword) params.append('keyword', debouncedKeyword)
         if (filters.isActive !== null) params.append('is_active', String(filters.isActive))
-        return `users?${params.toString()}`
-    }, [pagination, debouncedKeyword, filters.isActive])
+        if (filters.role !== null) params.append('role', String(filters.role))
+        return `users_login?${params.toString()}`
+    }, [pagination, debouncedKeyword, filters.isActive, filters.role])
 
     const { data, isLoading, error } = useSWR(swrKey, fetchUsers, {
         keepPreviousData: true,
@@ -103,8 +114,8 @@ export default function UsersPage() {
         if (pagination.pageIndex !== 0) {
             setPagination(p => ({ ...p, pageIndex: 0 }));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedKeyword, filters.isActive]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedKeyword, filters.isActive, filters.role]);
 
     const totalRows = data?.total ?? 0
     const pageCount = Math.ceil(totalRows / pagination.pageSize) || 1
@@ -113,10 +124,10 @@ export default function UsersPage() {
         if (!userToDelete) return;
 
         setIsDeleting(true);
-        const toastId = toast.loading(`Menghapus ${userToDelete.name}...`);
+        const toastId = toast.loading(`Menghapus ${userToDelete.username}...`);
 
         try {
-            const response = await api.delete(`/users/delete/${userToDelete.id}`);
+            const response = await api.delete(`/users_login/delete/${userToDelete.id}`);
 
             if (response.data && response.data.status === 'success') {
                 toast.update(toastId, {
@@ -153,12 +164,15 @@ export default function UsersPage() {
                 size: 5,
             },
             {
-                accessorKey: "emp_number",
-                header: "No. Karyawan",
+                accessorKey: "username",
+                header: "Username",
             },
             {
-                accessorKey: "name",
-                header: "Nama Karyawan",
+                accessorKey: "role",
+                header: "Role",
+                cell: ({ getValue }) => {
+                    return getValue() === "ADMIN" ? <span className="badge text-bg-success">Admin</span> : <span className="badge text-bg-info">Auditor</span>;
+                }
             },
             {
                 accessorKey: "is_active",
@@ -170,35 +184,18 @@ export default function UsersPage() {
                         <span className="badge text-bg-secondary">Tidak Aktif</span>
                     ),
             },
-            // [PERBAIKAN] Tambahkan kolom baru untuk Data Wajah
-            {
-                accessorKey: "face_directory",
-                header: "Data Wajah",
-                cell: ({ row }) => 
-                    row.original.face_directory ? (
-                        <span className="badge text-bg-primary">Tersedia</span>
-                    ) : (
-                        <span className="badge text-bg-secondary">Kosong</span>
-                    ),
-            },
             {
                 header: "Aksi",
                 size: 120,
                 cell: ({ row }) => (
                     <div className="d-flex gap-2">
-                        <Button variant="outline-info" size="sm" title="Detail Pengguna" onClick={() => {
-                            setDetailId(row.original.id)
-                            setShowDetailModal(true)
-                        }}>
-                            <InfoCircleFill />
-                        </Button>
                         <Button disabled={session?.user.role !== "ADMIN"} variant="outline-warning" size="sm" title="Edit Pengguna" onClick={() => {
                             setUserToEdit(row.original)
                             setShowEditModal(true)
                         }}>
                             <PencilSquare />
                         </Button>
-                        <Button  disabled={session?.user.role !== "ADMIN"} variant="outline-danger" size="sm" title="Hapus Pengguna" onClick={() => {
+                        <Button disabled={session?.user.role !== "ADMIN"} variant="outline-danger" size="sm" title="Hapus Pengguna" onClick={() => {
                             setUserToDelete(row.original)
                             setShowDeleteModal(true)
                         }}>
@@ -231,9 +228,9 @@ export default function UsersPage() {
                     <h4 className="mb-0">Manajemen Pengguna</h4>
                 </Col>
                 <Col xs="auto">
-                    <Button  disabled={session?.user.role !== "ADMIN"} variant="primary" onClick={() => router.push("/manajemen/users/create")}>
+                    <Button disabled={session?.user.role !== "ADMIN"} variant="primary" onClick={() => router.push("/manajemen/users-login/create")}>
                         <PersonPlusFill className="me-2" />
-                        Tambah Pengguna
+                        Tambah Pengguna Login
                     </Button>
                 </Col>
             </Row>
@@ -245,7 +242,7 @@ export default function UsersPage() {
                             <InputGroup>
                                 <InputGroup.Text><Search /></InputGroup.Text>
                                 <Form.Control
-                                    placeholder="Cari berdasarkan nama atau no. karyawan..."
+                                    placeholder="Cari berdasarkan username..."
                                     value={filters.keyword}
                                     onChange={(e) => setFilters(p => ({ ...p, keyword: e.target.value }))}
                                 />
@@ -259,6 +256,16 @@ export default function UsersPage() {
                                 <option value="null">Semua Status</option>
                                 <option value="true">Aktif</option>
                                 <option value="false">Tidak Aktif</option>
+                            </Form.Select>
+                        </Col>
+                        <Col md={3}>
+                            <Form.Select
+                                value={filters.role === null ? 'null' : filters.role}
+                                onChange={(e) => setFilters(p => ({ ...p, role: e.target.value === 'null' ? null : e.target.value }))}
+                            >
+                                <option value="null">Semua Role</option>
+                                <option value="ADMIN">Admin</option>
+                                <option value="AUDITOR">Auditor</option>
                             </Form.Select>
                         </Col>
                     </Row>
@@ -333,8 +340,8 @@ export default function UsersPage() {
                                         pageCount <= 5 || currentPage <= 2
                                             ? 0
                                             : currentPage + 2 >= pageCount
-                                            ? pageCount - 5
-                                            : currentPage - 2
+                                                ? pageCount - 5
+                                                : currentPage - 2
                                     const visiblePages = pageList.slice(startIndex, startIndex + 5)
 
                                     return visiblePages.map((item) => (
@@ -364,13 +371,7 @@ export default function UsersPage() {
                 )}
             </Card>
 
-            <UserDetailModal
-                userId={detailId}
-                show={showDetailModal}
-                onHide={() => setShowDetailModal(false)}
-            />
-            
-            <UserEditModal 
+            <UserEditModal
                 show={showEditModal}
                 onHide={() => setShowEditModal(false)}
                 user={userToEdit}
