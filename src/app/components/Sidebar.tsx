@@ -15,7 +15,6 @@ import {
 } from "react-bootstrap-icons"
 import { motion, AnimatePresence } from "framer-motion"
 import "./styles.css"
-import { useSession } from "next-auth/react"
 
 export default function Sidebar({
   collapsed,
@@ -26,7 +25,6 @@ export default function Sidebar({
 }) {
   const router = useRouter()
   const [openMaster, setOpenMaster] = useState(false)
-  const { data: session } = useSession()
 
   useEffect(() => {
     if (collapsed) {
