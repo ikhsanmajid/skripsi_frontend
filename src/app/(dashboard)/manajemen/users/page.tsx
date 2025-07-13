@@ -9,14 +9,14 @@ import {
     ColumnDef,
 } from "@tanstack/react-table"
 import useSWR, { useSWRConfig } from "swr"
-import { 
-    Button, 
-    Table, 
-    Form, 
-    Row, 
-    Col, 
-    Spinner, 
-    Card, 
+import {
+    Button,
+    Table,
+    Form,
+    Row,
+    Col,
+    Spinner,
+    Card,
     InputGroup,
 } from "react-bootstrap"
 import { useRouter } from "next/navigation"
@@ -48,6 +48,11 @@ export type User = {
     name: string
     is_active: boolean
     face_directory: string | null
+    idRfidUser: number | null
+    rfid: {
+        id: number | undefined,
+        number: string | undefined
+    } | null
 }
 
 const fetchUsers = async (url: string) => {
@@ -82,7 +87,7 @@ export default function UsersPage() {
 
     const { mutate } = useSWRConfig()
 
-    const {data: session} = useSession()
+    const { data: session, status } = useSession()
 
     const swrKey = useMemo(() => {
         const params = new URLSearchParams({
@@ -103,7 +108,7 @@ export default function UsersPage() {
         if (pagination.pageIndex !== 0) {
             setPagination(p => ({ ...p, pageIndex: 0 }));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedKeyword, filters.isActive]);
 
     const totalRows = data?.total ?? 0
@@ -174,7 +179,7 @@ export default function UsersPage() {
             {
                 accessorKey: "face_directory",
                 header: "Data Wajah",
-                cell: ({ row }) => 
+                cell: ({ row }) =>
                     row.original.face_directory ? (
                         <span className="badge text-bg-primary">Tersedia</span>
                     ) : (
@@ -182,10 +187,21 @@ export default function UsersPage() {
                     ),
             },
             {
+                accessorKey: "rfid.number",
+                header: "RFID",
+                cell: ({ row }) =>
+                    row.original.rfid?.number ? (
+                        <span className="badge text-bg-success">{row.original.rfid.number}</span>
+                    ) : (
+                        <span className="badge text-bg-secondary">RFID belum ada</span>
+                    ),
+            },
+            {
                 header: "Aksi",
                 size: 120,
                 cell: ({ row }) => (
                     <div className="d-flex gap-2">
+
                         <Button variant="outline-info" size="sm" title="Detail Pengguna" onClick={() => {
                             setDetailId(row.original.id)
                             setShowDetailModal(true)
@@ -198,18 +214,19 @@ export default function UsersPage() {
                         }}>
                             <PencilSquare />
                         </Button>
-                        <Button  disabled={session?.user.role !== "ADMIN"} variant="outline-danger" size="sm" title="Hapus Pengguna" onClick={() => {
+                        <Button disabled={session?.user.role !== "ADMIN"} variant="outline-danger" size="sm" title="Hapus Pengguna" onClick={() => {
                             setUserToDelete(row.original)
                             setShowDeleteModal(true)
                         }}>
                             <Trash />
                         </Button>
+
                     </div>
                 ),
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [pagination.pageIndex, pagination.pageSize, swrKey]
+        [pagination.pageIndex, pagination.pageSize, swrKey, status, session]
     )
 
     const table = useReactTable<User>({
@@ -231,7 +248,7 @@ export default function UsersPage() {
                     <h4 className="mb-0">Manajemen Pengguna</h4>
                 </Col>
                 <Col xs="auto">
-                    <Button  disabled={session?.user.role !== "ADMIN"} variant="primary" onClick={() => router.push("/manajemen/users/create")}>
+                    <Button disabled={session?.user.role !== "ADMIN"} variant="primary" onClick={() => router.push("/manajemen/users/create")}>
                         <PersonPlusFill className="me-2" />
                         Tambah Pengguna
                     </Button>
@@ -245,7 +262,7 @@ export default function UsersPage() {
                             <InputGroup>
                                 <InputGroup.Text><Search /></InputGroup.Text>
                                 <Form.Control
-                                    placeholder="Cari berdasarkan nama atau no. karyawan..."
+                                    placeholder="Cari berdasarkan nama, nomor RFID atau no. karyawan..."
                                     value={filters.keyword}
                                     onChange={(e) => setFilters(p => ({ ...p, keyword: e.target.value }))}
                                 />
@@ -333,8 +350,8 @@ export default function UsersPage() {
                                         pageCount <= 5 || currentPage <= 2
                                             ? 0
                                             : currentPage + 2 >= pageCount
-                                            ? pageCount - 5
-                                            : currentPage - 2
+                                                ? pageCount - 5
+                                                : currentPage - 2
                                     const visiblePages = pageList.slice(startIndex, startIndex + 5)
 
                                     return visiblePages.map((item) => (
@@ -369,8 +386,8 @@ export default function UsersPage() {
                 show={showDetailModal}
                 onHide={() => setShowDetailModal(false)}
             />
-            
-            <UserEditModal 
+
+            <UserEditModal
                 show={showEditModal}
                 onHide={() => setShowEditModal(false)}
                 user={userToEdit}

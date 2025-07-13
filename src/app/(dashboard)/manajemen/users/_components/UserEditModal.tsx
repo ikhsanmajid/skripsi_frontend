@@ -16,9 +16,37 @@ import { toast } from 'react-toastify'
 import { z } from "zod"
 import api from "@/lib/axios"
 import { type User } from "../page"
+import AsyncSelect from 'react-select/async'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+type OptionType = {
+    value: string;
+    label: string;
+}
+
+const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
+    try {
+        const response = await api.get("/rfid/getUnassigned", {
+            params: { keyword: inputValue },
+        });
+
+        //console.log("keyword: ", inputValue)
+
+        const data = response.data.data ?? [];
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return data.map((item: any) => ({
+            value: item.id,
+            label: item.number
+        }))
+    } catch (error) {
+        toast.error("Fetching data RFID gagal")
+        console.error("Fetching error: ", error)
+        return [];
+    }
+}
 
 
 const userUpdateSchema = z.object({
@@ -42,7 +70,7 @@ export const UserEditModal = ({ show, onHide, user, onUpdate }: {
     user: User | null,
     onUpdate: () => void
 }) => {
-    const [formData, setFormData] = useState({ name: '', emp_number: '' });
+    const [formData, setFormData] = useState<{ name: string, emp_number: string, rfid: { value: string | null, label: string | null } | null }>({ name: '', emp_number: '', rfid: null });
     const [isActive, setIsActive] = useState(true);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -52,9 +80,10 @@ export const UserEditModal = ({ show, onHide, user, onUpdate }: {
 
     useEffect(() => {
         if (user) {
-            setFormData({ name: user.name, emp_number: user.emp_number });
+            setFormData({ name: user.name, emp_number: user.emp_number, rfid: { value: user.rfid ? String(user.rfid.id) : null, label: user.rfid ? String(user.rfid.number) : null } });
             setIsActive(user.is_active);
         }
+        //console.log("data rfid user: ", user?.idRfidUser)
         // Selalu reset state file & error saat modal dibuka/user berubah
         setImageFile(null);
         if (imagePreview) {
@@ -89,7 +118,7 @@ export const UserEditModal = ({ show, onHide, user, onUpdate }: {
             name: formData.name,
             emp_number: formData.emp_number,
             is_active: isActive,
-            image: imageFile,
+            image: imageFile
         });
 
         if (!validationResult.success) {
@@ -107,7 +136,13 @@ export const UserEditModal = ({ show, onHide, user, onUpdate }: {
         const payload = new FormData();
         payload.append('name', formData.name);
         payload.append('emp_number', formData.emp_number);
+        if (formData.rfid?.value) {
+            payload.append('rfid', formData.rfid.value);
+        } else {
+            payload.append('rfid', '');
+        }
         payload.append('is_active', String(isActive));
+
 
         if (imageFile) {
             payload.append('image', imageFile);
@@ -143,7 +178,7 @@ export const UserEditModal = ({ show, onHide, user, onUpdate }: {
                 // Asumsikan error jika status bukan 'success'
                 throw new Error(response.data.message || "Gagal memperbarui data.");
             }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             const apiResponse = err.response?.data;
 
@@ -206,6 +241,32 @@ export const UserEditModal = ({ show, onHide, user, onUpdate }: {
                                 isInvalid={!!errors.emp_number}
                             />
                             <Form.Control.Feedback type="invalid">{errors.emp_number}</Form.Control.Feedback>
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row} className="mb-3" controlId="formEditRFID">
+                        <Form.Label column sm={3}>RFID</Form.Label>
+                        <Col sm={9}>
+                            <AsyncSelect
+                                name="rfid"
+                                cacheOptions
+                                loadOptions={loadOptions}
+                                defaultOptions
+                                value={
+                                    formData.rfid?.value && formData.rfid?.label
+                                        ? { value: formData.rfid.value, label: formData.rfid.label }
+                                        : null
+                                }
+                                onChange={(selected) => {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        rfid: {
+                                            value: selected?.value ?? null,
+                                            label: selected?.label ?? null,
+                                        },
+                                    }));
+                                    setErrors((prev) => ({ ...prev, rfid: undefined }));
+                                }}
+                                isClearable />
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row} className="mb-3">

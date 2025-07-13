@@ -13,6 +13,10 @@ type UserDetail = {
     emp_number: string
     face_directory: string
     is_active: boolean
+    rfid: {
+        id: number,
+        number: string | null
+    } | null
 }
 
 
@@ -107,6 +111,7 @@ export default function UserDetailModal({ userId, show, onHide }: Props) {
                 <>
                     <DetailRow label="Nama">{data.user.name}</DetailRow>
                     <DetailRow label="No. Karyawan">{data.user.emp_number}</DetailRow>
+                    <DetailRow label="No RFID">{data.user?.rfid?.number ?? "RFID belum didaftarkan"}</DetailRow>
                     <DetailRow label="Status">
                         {data.user.is_active ? (
                             <span className="badge text-bg-success">Aktif</span>
