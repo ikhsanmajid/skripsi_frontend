@@ -25,5 +25,5 @@ export default auth((req) => {
 
 // Konfigurasi matcher tetap sama
 export const config = {
-    matcher: ["/manajemen/:path*", "/home"],
+    matcher: ["/manajemen/:path*", "/home", "/access-log"],
 }

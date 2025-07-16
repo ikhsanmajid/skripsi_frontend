@@ -27,15 +27,7 @@ import { useSession } from "next-auth/react"
 import { RfidAddModal } from "./_components/RFIDAddModal"
 import { RfidEditModal } from "./_components/RFIDEditModal"
 import { DeleteConfirmationModal } from "./_components/DeleteConfirmationModal"
-
-const useDebounce = <T,>(value: T, delay: number): T => {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value)
-    useEffect(() => {
-        const handler = setTimeout(() => { setDebouncedValue(value) }, delay)
-        return () => { clearTimeout(handler) }
-    }, [value, delay])
-    return debouncedValue
-}
+import { useDebounce } from "@/lib/debounce"
 
 export type Rfid = {
     id: number

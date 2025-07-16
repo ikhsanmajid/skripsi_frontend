@@ -22,7 +22,7 @@ import {
 import { useRouter } from "next/navigation"
 import { PencilSquare, Trash, Search, PersonPlusFill } from "react-bootstrap-icons"
 import { ToastContainer, toast } from 'react-toastify'
-import { UserEditModal } from "./_components/UserEditModal"
+import { UserEditModal } from "./_components/UserLoginEditModal"
 import { UserDeleteModal } from "./_components/UserDeleteModal"
 
 import 'react-toastify/dist/ReactToastify.css'
@@ -31,19 +31,12 @@ import 'react-toastify/dist/ReactToastify.css'
 import api from "@/lib/axios"
 import { useSession } from "next-auth/react"
 import { AxiosError } from "axios"
+import { useDebounce } from "@/lib/debounce"
 
 
-const useDebounce = <T,>(value: T, delay: number): T => {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value)
-    useEffect(() => {
-        const handler = setTimeout(() => { setDebouncedValue(value) }, delay)
-        return () => { clearTimeout(handler) }
-    }, [value, delay])
-    return debouncedValue
-}
 export enum Role {
-    "ADMIN",
-    "AUDITOR"
+    ADMIN = "ADMIN",
+    AUDITOR = "AUDITOR"
 }
 
 export type User = {
@@ -92,7 +85,7 @@ export default function UsersPage() {
 
     const { mutate } = useSWRConfig()
 
-    const { data: session } = useSession()
+    const { data: session, status } = useSession()
 
     const swrKey = useMemo(() => {
         const params = new URLSearchParams({
@@ -206,7 +199,7 @@ export default function UsersPage() {
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [pagination.pageIndex, pagination.pageSize, swrKey]
+        [pagination.pageIndex, pagination.pageSize, swrKey, status]
     )
 
     const table = useReactTable<User>({

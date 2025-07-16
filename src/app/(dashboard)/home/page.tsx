@@ -76,7 +76,7 @@ export default function HalamanDashboard() {
                     <Card bg="primary" text="white" className="shadow-sm">
                         <Card.Body>
                             <div className="d-flex justify-content-between align-items-start">
-                                <h5 className="mb-0">Jumlah Karyawan</h5>
+                                <h5 className="mb-0">Jumlah Karyawan (Aktif)</h5>
                                 <Button
                                     variant="light"
                                     size="sm"

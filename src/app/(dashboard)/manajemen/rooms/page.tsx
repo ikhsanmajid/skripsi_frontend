@@ -19,7 +19,7 @@ import {
     Card, 
     InputGroup,
 } from "react-bootstrap"
-import { PencilSquare, Trash, Search, DoorClosedFill } from "react-bootstrap-icons"
+import { PencilSquare, Trash, Search, DoorClosedFill, KeyFill } from "react-bootstrap-icons"
 import { ToastContainer, toast } from 'react-toastify'
 import { useSession } from "next-auth/react"
 import 'react-toastify/dist/ReactToastify.css'
@@ -28,15 +28,8 @@ import { RoomModal } from "./_components/RoomAddEditModal"
 import { DeleteConfirmationModal } from "./_components/RoomDeleteModal"
 
 import api from "@/lib/axios"
-
-const useDebounce = <T,>(value: T, delay: number): T => {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value)
-    useEffect(() => {
-        const handler = setTimeout(() => { setDebouncedValue(value) }, delay)
-        return () => { clearTimeout(handler) }
-    }, [value, delay])
-    return debouncedValue
-}
+import { useRouter } from "next/navigation"
+import { useDebounce } from "@/lib/debounce"
 
 export type Room = {
     id: number
@@ -70,7 +63,8 @@ export default function RoomsPage() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const { data: session } = useSession()
+    const { data: session, status } = useSession()
+    const router = useRouter()
 
     const { mutate } = useSWRConfig();
     
@@ -156,20 +150,29 @@ export default function RoomsPage() {
                             setItemToEdit(row.original);
                             setShowModal(true);
                         }}>
-                            <PencilSquare />
+                            <PencilSquare /> Edit
                         </Button>
                         <Button disabled={session?.user.role !== "ADMIN"} variant="outline-danger" size="sm" title="Hapus Ruangan" onClick={() => {
                             setItemToDelete(row.original);
                             setShowDeleteModal(true);
                         }}>
-                            <Trash />
+                            <Trash /> Delete
+                        </Button>
+                        <Button 
+                            variant="outline-info" 
+                            size="sm" 
+                            title="Kelola Akses" 
+                            onClick={() => {
+                                router.push(`/manajemen/rooms/kelola-akses/${row.original.id}`);
+                            }}>
+                            <KeyFill/> Kelola Akses
                         </Button>
                     </div>
                 ),
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [pagination.pageIndex, pagination.pageSize, swrKey]
+        [pagination.pageIndex, pagination.pageSize, swrKey, session, status]
     );
 
     const table = useReactTable<Room>({
