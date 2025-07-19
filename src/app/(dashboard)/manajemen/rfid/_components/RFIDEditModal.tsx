@@ -11,7 +11,7 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { z } from "zod"
 import api from "@/lib/axios"
-import { type Rfid } from "../page"
+import { type Rfid } from "../../../../../../types/rfid" 
 
 const rfidUpdateSchema = z.object({
     number: z.string().min(8, "Nomor kartu RFID harus 8 karakter").max(8, "Nomor kartu RFID harus 8 karakter").optional(),

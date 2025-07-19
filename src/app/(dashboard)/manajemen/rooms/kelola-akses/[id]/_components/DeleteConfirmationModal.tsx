@@ -1,21 +1,23 @@
 "use client"
 
-import { 
-    Button, 
-    Spinner, 
-    Modal,
+import {
+    Button,
+    Spinner,
+    Modal
 } from "react-bootstrap"
 import { ExclamationTriangleFill } from "react-bootstrap-icons"
-import { type User } from "../../../../../../types/user"
+import { type AccessUser } from "../page"
 
-export const UserDeleteModal = ({ show, onHide, onConfirm, user, isDeleting }: {
+
+
+export const DeleteConfirmationModal = ({ show, onHide, onConfirm, item, isRevoking }: {
     show: boolean,
     onHide: () => void,
     onConfirm: () => void,
-    user: User | null,
-    isDeleting: boolean
+    item: AccessUser | null,
+    isRevoking: boolean
 }) => {
-    if (!user) return null;
+    if (!item) return null;
 
     return (
         <Modal show={show} onHide={onHide} centered backdrop="static">
@@ -26,16 +28,16 @@ export const UserDeleteModal = ({ show, onHide, onConfirm, user, isDeleting }: {
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                Apakah Anda yakin ingin menghapus pengguna: <strong>{user.name}</strong>?
+                Apakah Anda yakin ingin menghapus akses user: <strong>{item.name}</strong>?
                 <br />
                 <span className="text-danger">Tindakan ini tidak dapat dibatalkan.</span>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onHide} disabled={isDeleting}>
+                <Button variant="secondary" onClick={onHide} disabled={isRevoking}>
                     Batal
                 </Button>
-                <Button variant="danger" onClick={onConfirm} disabled={isDeleting}>
-                    {isDeleting ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Ya, Hapus'}
+                <Button variant="danger" onClick={onConfirm} disabled={isRevoking}>
+                    {isRevoking ? <Spinner as="span" animation="border" size="sm" /> : 'Ya, Hapus'}
                 </Button>
             </Modal.Footer>
         </Modal>

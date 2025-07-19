@@ -7,17 +7,7 @@ import api from "@/lib/axios"
 import { PersonBadge, WifiOff } from "react-bootstrap-icons"
 
 
-type UserDetail = {
-    id: number
-    name: string
-    emp_number: string
-    face_directory: string
-    is_active: boolean
-    rfid: {
-        id: number,
-        number: string | null
-    } | null
-}
+import { type UserDetail } from "../../../../../../types/user"
 
 
 type FetchedData = {

@@ -6,7 +6,7 @@ import {
     Modal
 } from "react-bootstrap"
 import { ExclamationTriangleFill } from "react-bootstrap-icons"
-import { type Rfid } from "../page"
+import { type Rfid } from "../../../../../../types/rfid"
 
 
 

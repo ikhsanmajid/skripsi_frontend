@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Card, Row, Col, Button, Spinner } from "react-bootstrap"
-import { getServerTime, useRoom, useUser } from "@/services/dashboardService"
+import { getServerTime, useRoom, useUser } from "@/services/dashboard.service"
 import { showError } from "@/lib/showError"
 import { Bounce, ToastContainer } from "react-toastify"
 
@@ -76,7 +76,7 @@ export default function HalamanDashboard() {
                     <Card bg="primary" text="white" className="shadow-sm">
                         <Card.Body>
                             <div className="d-flex justify-content-between align-items-start">
-                                <h5 className="mb-0">Jumlah Karyawan</h5>
+                                <h5 className="mb-0">Jumlah Karyawan (Aktif)</h5>
                                 <Button
                                     variant="light"
                                     size="sm"

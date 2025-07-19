@@ -11,8 +11,9 @@ import {
     Col,
     Button,
     Spinner,
+    InputGroup,
 } from "react-bootstrap"
-import { PersonPlusFill, ArrowLeft } from "react-bootstrap-icons"
+import { PersonPlusFill, ArrowLeft, Eye, EyeSlash } from "react-bootstrap-icons"
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { z } from "zod"
@@ -24,10 +25,10 @@ const userCreateSchema = z.object({
     password: z.string()
         .min(8, "Password minimal 8 karakter")
         .regex(
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
             "Password harus mengandung huruf besar, huruf kecil, angka, dan simbol"
         ),
-    role: z.enum(["ADMIN", "AUDITOR"], {message: "Wajib pilih satu"})
+    role: z.enum(["ADMIN", "AUDITOR"], { message: "Wajib pilih satu" })
 });
 
 
@@ -37,7 +38,7 @@ export default function UserLoginCreatePage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
-
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -152,19 +153,27 @@ export default function UserLoginCreatePage() {
                         <Form.Group as={Row} className="mb-3" controlId="formEmpNumber">
                             <Form.Label column sm={3} md={2} className="fw-semibold">Password</Form.Label>
                             <Col sm={9} md={10}>
-                                <Form.Control
-                                    type="password"
-                                    placeholder="Masukkan Password"
-                                    value={formData.password}
-                                    onChange={e => {
-                                        setFormData(p => ({ ...p, password: e.target.value }));
-                                        setErrors(p => ({ ...p, password: undefined }));
-                                    }}
-                                    required
-                                    disabled={isSubmitting}
-                                    isInvalid={!!errors.password}
-                                />
-                                <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
+                                <InputGroup>
+                                    <Form.Control
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Masukkan Password"
+                                        value={formData.password}
+                                        onChange={e => {
+                                            setFormData(p => ({ ...p, password: e.target.value }));
+                                            setErrors(p => ({ ...p, password: undefined }));
+                                        }}
+                                        required
+                                        disabled={isSubmitting}
+                                        isInvalid={!!errors.password}
+                                    />
+                                    <Button
+                                        variant="outline-secondary"
+                                        onClick={() => setShowPassword(prev => !prev)}
+                                        tabIndex={-1}                                 >
+                                        {showPassword ? <EyeSlash /> : <Eye />}
+                                    </Button>
+                                    <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
+                                </InputGroup>
                             </Col>
                         </Form.Group>
 
@@ -179,7 +188,7 @@ export default function UserLoginCreatePage() {
                                     }}
                                     required
                                     disabled={isSubmitting}
-                                    isInvalid={!!errors.role} 
+                                    isInvalid={!!errors.role}
                                 >
                                     <option value="">Pilih role...</option>
                                     <option value="ADMIN">Admin</option>
@@ -212,6 +221,6 @@ export default function UserLoginCreatePage() {
                     </Card.Footer>
                 </Form>
             </Card>
-        </Container>
+        </Container >
     )
 }

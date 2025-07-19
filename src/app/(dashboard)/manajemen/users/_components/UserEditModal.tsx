@@ -15,7 +15,7 @@ import { CloudUpload } from "react-bootstrap-icons"
 import { toast } from 'react-toastify'
 import { z } from "zod"
 import api from "@/lib/axios"
-import { type User } from "../page"
+import { type User } from "../../../../../../types/user"
 import AsyncSelect from 'react-select/async'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;

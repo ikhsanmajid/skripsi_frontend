@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import api from "@/lib/axios"
 import { fetcher } from "@/lib/fetcher"
 import useSWR, { mutate } from "swr"
 

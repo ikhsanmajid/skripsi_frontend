@@ -11,7 +11,8 @@ import {
   People,
   Cpu,
   DoorClosed,
-  PersonLock
+  PersonLock,
+  DoorOpen
 } from "react-bootstrap-icons"
 import { motion, AnimatePresence } from "framer-motion"
 import "./styles.css"
@@ -127,16 +128,16 @@ export default function Sidebar({
         </AnimatePresence>
 
         {/* About */}
-        {/* <Nav.Link onClick={() => router.push("/about")} className="text-white nav-link border-menu">
-          <div className="nav-icon"><Info /></div>
+        <Nav.Link onClick={() => router.push("/access-log")} className="text-white nav-link border-menu">
+          <div className="nav-icon"><DoorOpen /></div>
           <AnimatePresence>
             {!collapsed && (
               <motion.span key="about" variants={labelVariants} initial="hidden" animate="visible" exit="hidden" transition={{ duration: 0.2 }} className="nav-label">
-                About
+                Access Log
               </motion.span>
             )}
           </AnimatePresence>
-        </Nav.Link> */}
+        </Nav.Link>
       </Nav>
     </motion.div>
   )
