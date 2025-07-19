@@ -10,7 +10,7 @@ import {
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { z } from "zod"
-import { type Room } from "../page"
+import { type Room } from "../../../../../../types/room"
 
 import api from "@/lib/axios"
 

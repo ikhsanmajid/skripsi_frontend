@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Card, Row, Col, Button, Spinner } from "react-bootstrap"
-import { getServerTime, useRoom, useUser } from "@/services/dashboardService"
+import { getServerTime, useRoom, useUser } from "@/services/dashboard.service"
 import { showError } from "@/lib/showError"
 import { Bounce, ToastContainer } from "react-toastify"
 

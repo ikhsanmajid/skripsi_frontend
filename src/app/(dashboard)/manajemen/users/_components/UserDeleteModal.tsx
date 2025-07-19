@@ -6,7 +6,7 @@ import {
     Modal,
 } from "react-bootstrap"
 import { ExclamationTriangleFill } from "react-bootstrap-icons"
-import { type User } from "../page"
+import { type User } from "../../../../../../types/user"
 
 export const UserDeleteModal = ({ show, onHide, onConfirm, user, isDeleting }: {
     show: boolean,

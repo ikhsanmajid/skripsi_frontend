@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
 import {
     useReactTable,
     getCoreRowModel,
     flexRender,
     ColumnDef,
 } from "@tanstack/react-table"
-import useSWR, { useSWRConfig } from "swr"
+
 import {
     Button,
     Table,
@@ -19,35 +18,20 @@ import {
     Card,
     InputGroup,
 } from "react-bootstrap"
-import { PencilSquare, Trash, Search, TagFill } from "react-bootstrap-icons"
-import { ToastContainer, toast } from 'react-toastify'
+
 import 'react-toastify/dist/ReactToastify.css'
-import api from "@/lib/axios"
-import { useSession } from "next-auth/react"
+import { DeleteConfirmationModal } from "./_components/DeleteConfirmationModal"
+import { deleteRfid, fetchRfids } from "@/services/rfid.service"
+import { PencilSquare, Trash, Search, TagFill } from "react-bootstrap-icons"
 import { RfidAddModal } from "./_components/RFIDAddModal"
 import { RfidEditModal } from "./_components/RFIDEditModal"
-import { DeleteConfirmationModal } from "./_components/DeleteConfirmationModal"
+import { ToastContainer, toast } from 'react-toastify'
+import { type Rfid } from "../../../../../types/rfid"
 import { useDebounce } from "@/lib/debounce"
-
-export type Rfid = {
-    id: number
-    number: string
-    is_active: boolean
-}
-
-const fetchRfids = async (url: string) => {
-    try {
-        const { data } = await api.get(url)
-        return {
-            data: data.data as Rfid[],
-            total: data.count,
-        }
-    } catch (error) {
-        console.error("Gagal memuat RFID:", error)
-        toast.error("Gagal memuat data RFID.")
-        return { data: [], total: 0 }
-    }
-}
+import { useMemo, useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import useSWR, { useSWRConfig } from "swr"
+import Pagination from "@/app/components/Pagination"
 
 export default function RfidPage() {
     const [filters, setFilters] = useState({ keyword: "", isActive: null as boolean | null })
@@ -63,7 +47,7 @@ export default function RfidPage() {
 
     const { mutate } = useSWRConfig()
 
-    const { data: session } = useSession()
+    const { data: session, status } = useSession()
 
     const swrKey = useMemo(() => {
         const params = new URLSearchParams({
@@ -84,7 +68,7 @@ export default function RfidPage() {
         if (pagination.pageIndex !== 0) {
             setPagination(p => ({ ...p, pageIndex: 0 }));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedKeyword, filters.isActive]);
 
     const totalRows = data?.total ?? 0
@@ -97,11 +81,11 @@ export default function RfidPage() {
         const toastId = toast.loading(`Menghapus ${itemToDelete.number}...`);
 
         try {
-            const response = await api.delete(`/rfid/delete/${itemToDelete.id}`);
+            const response = await deleteRfid(itemToDelete.id)
             if (response.data && response.data.status === 'success') {
                 toast.update(toastId, { render: "RFID berhasil dihapus!", type: "success", isLoading: false, autoClose: 3000 });
 
-               
+
                 const isLastItemOnPage = data?.data.length === 1 && pagination.pageIndex > 0;
                 if (isLastItemOnPage) {
                     setPagination(p => ({ ...p, pageIndex: p.pageIndex - 1 }));
@@ -165,7 +149,7 @@ export default function RfidPage() {
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [pagination.pageIndex, pagination.pageSize, swrKey]
+        [pagination.pageIndex, pagination.pageSize, swrKey, status]
     )
 
     const table = useReactTable<Rfid>({
@@ -262,60 +246,7 @@ export default function RfidPage() {
                 </Card.Body>
                 {totalRows > 0 && (
                     <Card.Footer className="d-flex flex-wrap justify-content-between align-items-center p-3">
-                        <span className="text-muted small">
-                            Menampilkan{' '}
-                            <strong>{table.getRowModel().rows.length > 0 ? pagination.pageIndex * pagination.pageSize + 1 : 0}</strong>
-                            {' - '}
-                            <strong>{pagination.pageIndex * pagination.pageSize + table.getRowModel().rows.length}</strong>
-                            {' '}dari <strong>{totalRows}</strong> data
-                        </span>
-
-                        <nav className="d-flex align-items-center gap-2">
-                            <ul className="pagination mb-0">
-                                <li className={`page-item ${!table.getCanPreviousPage() ? "disabled" : ""}`}>
-                                    <button className="page-link" onClick={() => table.setPageIndex(0)}>
-                                        Awal
-                                    </button>
-                                </li>
-                                <li className={`page-item ${!table.getCanPreviousPage() ? "disabled" : ""}`}>
-                                    <button className="page-link" onClick={() => table.previousPage()}>
-                                        Sebelumnya
-                                    </button>
-                                </li>
-                                {(() => {
-                                    const pageList = [...Array(pageCount)].map((_, i) => i)
-                                    const currentPage = table.getState().pagination.pageIndex
-                                    const startIndex =
-                                        pageCount <= 5 || currentPage <= 2
-                                            ? 0
-                                            : currentPage + 2 >= pageCount
-                                                ? pageCount - 5
-                                                : currentPage - 2
-                                    const visiblePages = pageList.slice(startIndex, startIndex + 5)
-
-                                    return visiblePages.map((item) => (
-                                        <li key={item} className={`page-item ${currentPage === item ? "active" : ""}`}>
-                                            <button className="page-link" onClick={() => table.setPageIndex(item)}>
-                                                {item + 1}
-                                            </button>
-                                        </li>
-                                    ))
-                                })()}
-                                <li className={`page-item ${!table.getCanNextPage() ? "disabled" : ""}`}>
-                                    <button className="page-link" onClick={() => table.nextPage()}>
-                                        Berikutnya
-                                    </button>
-                                </li>
-                                <li className={`page-item ${!table.getCanNextPage() ? "disabled" : ""}`}>
-                                    <button className="page-link" onClick={() => table.setPageIndex(pageCount - 1)}>
-                                        Akhir
-                                    </button>
-                                </li>
-                            </ul>
-                            <span className="badge bg-light text-dark d-none d-md-inline">
-                                Halaman {pagination.pageIndex + 1} / {pageCount}
-                            </span>
-                        </nav>
+                        <Pagination<Rfid> table={table} pagination={pagination} pageCount={pageCount} totalRows={totalRows}></Pagination>
                     </Card.Footer>
                 )}
             </Card>

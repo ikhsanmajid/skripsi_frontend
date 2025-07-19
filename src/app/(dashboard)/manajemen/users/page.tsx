@@ -27,38 +27,15 @@ import { UserDeleteModal } from "./_components/UserDeleteModal"
 
 import 'react-toastify/dist/ReactToastify.css'
 
-
-import api from "@/lib/axios"
 import UserDetailModal from "./_components/UserDetailModal"
 import { useSession } from "next-auth/react"
 import { useDebounce } from "@/lib/debounce"
+import Pagination from "@/app/components/Pagination"
 
-export type User = {
-    id: number
-    emp_number: string
-    name: string
-    is_active: boolean
-    face_directory: string | null
-    idRfidUser: number | null
-    rfid: {
-        id: number | undefined,
-        number: string | undefined
-    } | null
-}
+import { type User } from "../../../../../types/user"
+import { deleteUser, fetchUsers } from "@/services/user.service"
 
-const fetchUsers = async (url: string) => {
-    try {
-        const { data } = await api.get(url)
-        return {
-            data: data.data as User[],
-            total: data.count,
-        }
-    } catch (error) {
-        console.error("Gagal memuat pengguna:", error)
-        toast.error("Gagal memuat data pengguna.")
-        return { data: [], total: 0 }
-    }
-}
+
 
 export default function UsersPage() {
     const router = useRouter()
@@ -112,7 +89,7 @@ export default function UsersPage() {
         const toastId = toast.loading(`Menghapus ${userToDelete.name}...`);
 
         try {
-            const response = await api.delete(`/users/delete/${userToDelete.id}`);
+            const response = await deleteUser(userToDelete.id)
 
             if (response.data && response.data.status === 'success') {
                 toast.update(toastId, {
@@ -314,60 +291,7 @@ export default function UsersPage() {
                 </Card.Body>
                 {totalRows > 0 && (
                     <Card.Footer className="d-flex flex-wrap justify-content-between align-items-center p-3">
-                        <span className="text-muted small">
-                            Menampilkan{' '}
-                            <strong>{table.getRowModel().rows.length > 0 ? pagination.pageIndex * pagination.pageSize + 1 : 0}</strong>
-                            {' - '}
-                            <strong>{pagination.pageIndex * pagination.pageSize + table.getRowModel().rows.length}</strong>
-                            {' '}dari <strong>{totalRows}</strong> data
-                        </span>
-
-                        <nav className="d-flex align-items-center gap-2">
-                            <ul className="pagination mb-0">
-                                <li className={`page-item ${!table.getCanPreviousPage() ? "disabled" : ""}`}>
-                                    <button className="page-link" onClick={() => table.setPageIndex(0)}>
-                                        Awal
-                                    </button>
-                                </li>
-                                <li className={`page-item ${!table.getCanPreviousPage() ? "disabled" : ""}`}>
-                                    <button className="page-link" onClick={() => table.previousPage()}>
-                                        Sebelumnya
-                                    </button>
-                                </li>
-                                {(() => {
-                                    const pageList = [...Array(pageCount)].map((_, i) => i)
-                                    const currentPage = table.getState().pagination.pageIndex
-                                    const startIndex =
-                                        pageCount <= 5 || currentPage <= 2
-                                            ? 0
-                                            : currentPage + 2 >= pageCount
-                                                ? pageCount - 5
-                                                : currentPage - 2
-                                    const visiblePages = pageList.slice(startIndex, startIndex + 5)
-
-                                    return visiblePages.map((item) => (
-                                        <li key={item} className={`page-item ${currentPage === item ? "active" : ""}`}>
-                                            <button className="page-link" onClick={() => table.setPageIndex(item)}>
-                                                {item + 1}
-                                            </button>
-                                        </li>
-                                    ))
-                                })()}
-                                <li className={`page-item ${!table.getCanNextPage() ? "disabled" : ""}`}>
-                                    <button className="page-link" onClick={() => table.nextPage()}>
-                                        Berikutnya
-                                    </button>
-                                </li>
-                                <li className={`page-item ${!table.getCanNextPage() ? "disabled" : ""}`}>
-                                    <button className="page-link" onClick={() => table.setPageIndex(pageCount - 1)}>
-                                        Akhir
-                                    </button>
-                                </li>
-                            </ul>
-                            <span className="badge bg-light text-dark d-none d-md-inline">
-                                Halaman {pagination.pageIndex + 1} / {pageCount}
-                            </span>
-                        </nav>
+                        <Pagination<User> table={table} pagination={pagination} pageCount={pageCount} totalRows={totalRows} />
                     </Card.Footer>
                 )}
             </Card>
