@@ -92,8 +92,6 @@ const fetchAccessList = async (url: string): Promise<AccessListResponse> => {
 };
 
 
-// ===== MAIN COMPONENT =====
-
 export default function AccessManagementPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
     const { id: roomId } = use(params)
@@ -103,7 +101,6 @@ export default function AccessManagementPage({ params }: { params: Promise<{ id:
 
     const [isLoadingGrant, setIsLoadingGrant] = useState<boolean>(false)
 
-    // State for AsyncSelect to add new users
     const [selectedUser, setSelectedUser] = useState<SelectOption | null>(null);
     const [reloadUnassignedUser, setReloadUnassignedUser] = useState<number>(0)
 
@@ -111,15 +108,12 @@ export default function AccessManagementPage({ params }: { params: Promise<{ id:
     const [showRevokeModal, setShowRevokeModal] = useState(false)
     const [isRevoking, setIsRevoking] = useState(false)
 
-    // State for TanStack Table (Access List)
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
     const [accessListKeyword, setAccessListKeyword] = useState('');
 
     const debouncedAccessListKeyword = useDebounce(accessListKeyword, 500);
 
-    // --- DATA FETCHING (SWR) ---
 
-    // Fetch room details
     const { data: room, error: roomError, isLoading: roomLoading } = useSWR<RoomDetails>(
         roomId ? `/rooms/${roomId}` : null,
         fetcher

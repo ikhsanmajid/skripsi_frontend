@@ -33,22 +33,7 @@ import { useSession } from "next-auth/react"
 import { AxiosError } from "axios"
 import { useDebounce } from "@/lib/debounce"
 import Pagination from "@/app/components/Pagination"
-
-
-export enum Role {
-    ADMIN = "ADMIN",
-    AUDITOR = "AUDITOR"
-}
-
-export type User = {
-    id: number
-    username: string
-    password: string,
-    role: Role,
-    is_active: boolean
-}
-
-
+import { User } from "../../../../../types/user-login"
 
 const fetchUsers = async (url: string) => {
     try {
