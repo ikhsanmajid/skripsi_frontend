@@ -6,7 +6,7 @@ import {
     Modal,
 } from "react-bootstrap"
 import { ExclamationTriangleFill } from "react-bootstrap-icons"
-import { type User } from "../page"
+import { type User } from "../../../../../../types/user-login"
 
 export const UserDeleteModal = ({ show, onHide, onConfirm, user, isDeleting }: {
     show: boolean,
@@ -26,7 +26,7 @@ export const UserDeleteModal = ({ show, onHide, onConfirm, user, isDeleting }: {
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                Apakah Anda yakin ingin menghapus pengguna: <strong>{user.name}</strong>?
+                Apakah Anda yakin ingin menghapus pengguna: <strong>{user.username}</strong>?
                 <br />
                 <span className="text-danger">Tindakan ini tidak dapat dibatalkan.</span>
             </Modal.Body>

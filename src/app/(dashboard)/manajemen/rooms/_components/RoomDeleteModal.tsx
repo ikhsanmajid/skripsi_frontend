@@ -6,7 +6,7 @@ import {
     Modal
 } from "react-bootstrap"
 import { ExclamationTriangleFill } from "react-bootstrap-icons"
-import { type Room } from "../page"
+import { type Room } from "../../../../../../types/room"
 
 export const DeleteConfirmationModal = ({ show, onHide, onConfirm, item, isDeleting }: {
     show: boolean,

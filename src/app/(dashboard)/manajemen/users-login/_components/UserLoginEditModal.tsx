@@ -14,7 +14,7 @@ import { Eye, EyeSlash } from "react-bootstrap-icons"
 import { toast } from 'react-toastify'
 import { z } from "zod"
 import api from "@/lib/axios"
-import { Role, type User } from "../page"
+import { type Role, type User } from "../../../../../../types/user-login"
 
 
 const userUpdateSchema = z.object({
