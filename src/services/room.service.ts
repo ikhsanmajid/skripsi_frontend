@@ -15,6 +15,7 @@ export const fetchRooms = async (url: string): Promise<{ data: Room[]; total: nu
     }
 }
 
+
 export const deleteRoom = async (roomId: number) => {
     const response = await api.delete(`/rooms/delete/${roomId}`)
     return response
