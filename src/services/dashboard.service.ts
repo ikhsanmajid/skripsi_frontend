@@ -48,12 +48,57 @@ export const useLastTenAccess = () => {
     }
 }
 
+// export const useAccessLog = () => {
+//     const { data, error, isLoading } = useSWR("/access-log/access-list", fetcher)
+
+//     return {
+//         data,
+//         isLoading,
+//         isError: error,
+//         refresh: () => mutate("/access-log")
+//     }
+// }
+
+interface AccessLogFilters {
+    [key: string]: string | number | boolean | Date | undefined | null
+}
+
+export const useAccessLog = (
+    pageIndex: number,
+    pageSize: number,
+    filters: AccessLogFilters = {}
+) => {
+    const params = new URLSearchParams({
+        limit: String(pageSize),
+        offset: String(pageIndex * pageSize),
+        ...Object.fromEntries(
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            Object.entries(filters).filter(([_, v]) => v !== undefined && v !== null && v !== "")
+        )
+    })
+
+    const endpoint = `/access-log/access-list?${params.toString()}`
+
+    const { data, error, isLoading } = useSWR(endpoint, fetcher)
+
+    return {
+        data: data?.data || [],
+        total: data?.count || 0,
+        isLoading,
+        isError: error,
+        refresh: () => mutate(endpoint)
+    }
+}
+
 export function useAccessLogImages(fileNames: string[]) {
     const [imageUrls, setImageUrls] = useState<Record<string, string | null>>({})
+    const [isLoading, setIsLoading] = useState<boolean>(true)
 
     useEffect(() => {
         fileNames.forEach(async (fileName) => {
-            if (!fileName || imageUrls[fileName]) return
+            if (!fileName || imageUrls[fileName] !== undefined) return
+
+            setIsLoading(true)
 
             try {
                 const response = await api.get(`access-log/image/${fileName}`, {
@@ -61,13 +106,15 @@ export function useAccessLogImages(fileNames: string[]) {
                 })
                 const url = URL.createObjectURL(response.data)
                 setImageUrls((prev) => ({ ...prev, [fileName]: url }))
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (err) {
                 console.error("Gagal mengambil gambar untuk", fileName)
                 setImageUrls((prev) => ({ ...prev, [fileName]: null }))
+            } finally {
+                setIsLoading(false)
             }
         })
     }, [fileNames, imageUrls])
 
-    return imageUrls
+    return { imageUrls, isLoading }
 }

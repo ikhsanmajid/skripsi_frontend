@@ -415,7 +415,7 @@ export default function AccessManagementPage({ params }: { params: Promise<{ id:
                     </Card.Body>
                     {totalRows > 0 && !isOverallLoading && (
                         <Card.Footer className="d-flex flex-wrap justify-content-between align-items-center p-3">
-                            <Pagination<AccessUser> table={table} pagination={pagination} pageCount={pageCount} totalRows={totalRows} />
+                            <Pagination<AccessUser> table={table} pagination={pagination} pageCount={pageCount} totalRows={totalRows} isLoading={accessLoading}/>
                         </Card.Footer>
                     )}
                 </Card>

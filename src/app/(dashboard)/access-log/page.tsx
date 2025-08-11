@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useState } from "react"
 import {
     Card, Row, Col, Button, Spinner, Table, Image,
-    InputGroup
+    InputGroup,
+    Placeholder
 } from "react-bootstrap"
 import {
-    getServerTime, useLastTenAccess, useRoom, useUser
+    getServerTime, useAccessLog
 } from "@/services/dashboard.service"
-import { showError } from "@/lib/showError"
 import { Bounce, toast, ToastContainer } from "react-toastify"
 import {
     ColumnDef, flexRender, getCoreRowModel, useReactTable
@@ -20,6 +20,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useDebounceFunc } from "@/lib/debounce"
 import api from "@/lib/axios"
 import AsyncSelect from "react-select/async"
+import Pagination from "@/app/components/Pagination"
 
 type lastTenAccess = {
     id: number
@@ -42,6 +43,7 @@ type User = {
     is_active: boolean
     face_directory: string | null
     idRfidUser: number
+    idUser: number | null
     rfid?: {
         id: number | undefined,
         number: string | undefined
@@ -60,32 +62,9 @@ export default function AccessLog() {
     const [serverTime, setServerTime] = useState<Date | null>(null)
     const { time } = getServerTime()
 
-    const {
-        data: roomCount,
-        isLoading: isLoadingRoom,
-        isError: isErrorRoom,
-        refresh: refreshCountRoom,
-    } = useRoom()
 
-    const {
-        data: userCount,
-        isLoading: isLoadingUser,
-        isError: isErrorUser,
-        refresh: refreshCountUser,
-    } = useUser()
 
-    const {
-        data: lastTenAccess,
-        isLoading: isLoadingLastTenAccess,
-        isError: isErrorLastTenAccess,
-        refresh: refreshLastTenAccess
-    } = useLastTenAccess()
-
-    const fileNames = useMemo(() => {
-        return lastTenAccess?.data?.map((d: lastTenAccess) => d.access_log_image_dir) ?? []
-    }, [lastTenAccess])
-
-    const imageUrls = useAccessLogImages(fileNames)
+    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
 
     const [startDate, setStartDate] = useState<Date | null>(null)
     const [endDate, setEndDate] = useState<Date | null>(null)
@@ -98,13 +77,37 @@ export default function AccessLog() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [reloadUnassignedRoom, setReloadUnassignedRoom] = useState<number>(0)
 
-    const fetchUnassignedUsers = async (inputValue: string): Promise<SelectOption[]> => {
-        if (!inputValue) return [];
+    const [filters, setFilters] = useState({
+        start_date: null as string | null,
+        end_date: null as string | null,
+        room_id: null as number | null,
+        user_id: null as number | null
+    })
+
+    const {
+        data: accessLogData,
+        total: accessLogTotal,
+        isLoading: isLoadingAccessLog,
+        isError: isErrorAccessLog,
+        refresh: refreshAccessLog
+    } = useAccessLog(pagination.pageIndex, pagination.pageSize, filters)
+
+    const totalRows = accessLogTotal ?? 0
+    const pageCount = Math.ceil(totalRows / pagination.pageSize) || 1
+
+    const fileNames = useMemo(() => {
+        return accessLogData?.map((d: lastTenAccess) => d.access_log_image_dir) ?? []
+    }, [accessLogData])
+
+    const { imageUrls, isLoading } = useAccessLogImages(fileNames)
+
+    const fetchUsers = async (inputValue: string): Promise<SelectOption[]> => {
+        //if (!inputValue) return [];
         try {
             const { data } = await api.get(`/users/?keyword=${inputValue}`);
             const users: User[] = data.data || [];
             return users.map(user => ({
-                value: user.idRfidUser,
+                value: user.idUser!,
                 label: `${user.name} (${user.rfid?.number || 'No RFID'})`
             }));
         } catch (error) {
@@ -114,8 +117,8 @@ export default function AccessLog() {
         }
     };
 
-    const fetchUnassignedRooms = async (inputValue: string): Promise<SelectOption[]> => {
-        if (!inputValue) return [];
+    const fetchRooms = async (inputValue: string): Promise<SelectOption[]> => {
+        //if (!inputValue) return [];
         try {
             const { data } = await api.get(`/rooms/?keyword=${inputValue}`);
             const users: Room[] = data.data || [];
@@ -130,26 +133,25 @@ export default function AccessLog() {
         }
     };
 
-    const debouncedFetchUsers = useDebounceFunc(fetchUnassignedUsers, 500)
-    const debouncedFetchRoom = useDebounceFunc(fetchUnassignedRooms, 500)
+    const debouncedFetchUsers = useDebounceFunc(fetchUsers, 500)
+    const debouncedFetchRoom = useDebounceFunc(fetchRooms, 500)
 
     function handleFilter() {
-        if (!startDate || !endDate) return;
+        if (!startDate && endDate) toast.error("Tanggal Awal Harus Diisi")
 
-        // Kirim ke server nanti, misalnya:
-        console.log("Filter:", {
-            startDate: startDate.toISOString(),
-            endDate: endDate.toISOString(),
-        });
-
-        // Kalau ingin langsung filter di frontend:
-        // Atau bisa trigger request baru ke useLastTenAccess({ startDate, endDate })
+        setFilters({
+            start_date: startDate ? startDate.toLocaleDateString("en-CA") : null,
+            end_date: endDate ? endDate.toLocaleDateString("en-CA") : null,
+            room_id: selectedRoom?.value ?? null,
+            user_id: selectedUser?.value ?? null
+        })
+        setPagination(prev => ({ ...prev, pageIndex: 0 })) // reset ke halaman pertama
     }
 
     const columns = useMemo<ColumnDef<lastTenAccess>[]>(() => [
         {
             header: "No.",
-            cell: (info) => info.row.index + 1,
+            cell: (info) => pagination.pageIndex * pagination.pageSize + info.row.index + 1,
             size: 5,
         },
         {
@@ -171,19 +173,24 @@ export default function AccessLog() {
                 const fileName = info.getValue() as string
                 const imgSrc = imageUrls[fileName]
 
-                if (imgSrc === undefined) {
-                    return <span className="text-muted fst-italic">Memuat...</span>
+                if (isLoading) {
+                    return (
+                        <Placeholder as="div" animation="wave">
+                            <Placeholder
+                                xs={12}
+                                style={{ maxWidth: 180, height: 120 }}
+                            />
+                        </Placeholder>
+                    )
                 }
 
-                return imgSrc ? (
+                return (
                     <Image
-                        src={imgSrc}
+                        src={imgSrc!}
                         thumbnail
                         style={{ maxWidth: 180, height: 'auto' }}
                         alt="Foto wajah"
                     />
-                ) : (
-                    <span className="text-muted fst-italic">Tidak ada foto</span>
                 )
             },
         },
@@ -206,11 +213,14 @@ export default function AccessLog() {
             },
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    ], [imageUrls, session, status])
+    ], [pagination.pageIndex, pagination.pageSize, imageUrls, session, status])
 
     const table = useReactTable<lastTenAccess>({
-        data: lastTenAccess?.data ?? [],
+        data: accessLogData ?? [],
         columns,
+        pageCount,
+        state: { pagination },
+        onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
         manualPagination: true,
     })
@@ -229,14 +239,6 @@ export default function AccessLog() {
         return () => clearInterval(interval)
     }, [time])
 
-    useEffect(() => {
-        if (isErrorRoom) showError({ message: "Gagal Fetch Room" })
-    }, [isErrorRoom])
-
-    useEffect(() => {
-        if (isErrorUser) showError({ message: "Gagal Fetch User" })
-    }, [isErrorUser])
-
     return (
         <div>
             <ToastContainer limit={4} newestOnTop transition={Bounce} />
@@ -252,41 +254,7 @@ export default function AccessLog() {
                 }) ?? "Memuat..."}
             </div>
 
-            <h3 className="mb-4">Dashboard</h3>
-
-            <Row className="g-4">
-                <Col md={6} lg={4}>
-                    <Card bg="primary" text="white" className="shadow-sm">
-                        <Card.Body>
-                            <div className="d-flex justify-content-between align-items-start">
-                                <h5 className="mb-0">Jumlah Karyawan (Aktif)</h5>
-                                <Button variant="light" size="sm" onClick={refreshCountUser} title="Refresh">⟳</Button>
-                            </div>
-                            <div style={{ fontSize: "2rem", fontWeight: "bold" }}>
-                                {isLoadingUser ? <Spinner animation="border" size="sm" /> :
-                                    isErrorUser ? "Gagal" : (userCount?.count ?? 0)}
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-
-                <Col md={6} lg={4}>
-                    <Card bg="success" text="white" className="shadow-sm">
-                        <Card.Body>
-                            <div className="d-flex justify-content-between align-items-start">
-                                <h5 className="mb-0">Jumlah Ruangan</h5>
-                                <Button variant="light" size="sm" onClick={refreshCountRoom} title="Refresh">⟳</Button>
-                            </div>
-                            <div style={{ fontSize: "2rem", fontWeight: "bold" }}>
-                                {isLoadingRoom ? <Spinner animation="border" size="sm" /> :
-                                    isErrorRoom ? "Gagal" : (roomCount?.count ?? 0)}
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-
-
+            <h3 className="mb-4">Access Log</h3>
 
             <Row>
                 <Col className="mt-4" md={8} lg={12}>
@@ -297,18 +265,12 @@ export default function AccessLog() {
                                 <Button
                                     variant="info"
                                     size="lg"
-                                    onClick={refreshLastTenAccess}
+                                    onClick={refreshAccessLog}
                                     title="Refresh"
                                 >
                                     ⟳
                                 </Button>
                             </div>
-
-                            {isLoadingLastTenAccess && (
-                                <div className="d-flex justify-content-center my-2">
-                                    <Spinner animation="border" variant="primary" size="sm" />
-                                </div>
-                            )}
                         </Card.Header>
                         <Card.Body>
                             <Row className="mb-4 align-items-end">
@@ -408,12 +370,21 @@ export default function AccessLog() {
                                         ))}
                                     </thead>
                                     <tbody>
-                                        {table.getRowModel().rows.length === 0 ? (
+                                        {isLoadingAccessLog && (
                                             <tr>
                                                 <td colSpan={columns.length} className="text-center py-5">
-                                                    {isErrorLastTenAccess ? "Gagal memuat data." : "Data tidak ditemukan."}
+                                                    <Spinner animation="border" variant="primary" size="sm" />
                                                 </td>
                                             </tr>
+                                        )}
+
+                                        {!isLoadingAccessLog && table.getRowModel().rows.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={columns.length} className="text-center py-5">
+                                                    {isErrorAccessLog ? "Gagal memuat data." : "Data tidak ditemukan."}
+                                                </td>
+                                            </tr>
+
                                         ) : (
                                             table.getRowModel().rows.map((row) => (
                                                 <tr key={row.id}>
@@ -429,6 +400,11 @@ export default function AccessLog() {
                                 </Table>
                             </div>
                         </Card.Body>
+                        {totalRows > 0 && (
+                            <Card.Footer className="d-flex flex-wrap justify-content-between align-items-center p-3">
+                                <Pagination<lastTenAccess> table={table} pagination={pagination} pageCount={pageCount} totalRows={totalRows} isLoading={isLoadingAccessLog} />
+                            </Card.Footer>
+                        )}
                     </Card>
                 </Col>
             </Row>
