@@ -79,7 +79,7 @@ export default function HalamanDashboard() {
             header: "Foto Akses",
             cell: (info) => {
                 const fileName = info.getValue() as string
-                const imgSrc = imageUrls[fileName]
+                const imgSrc = imageUrls.imageUrls[fileName]
 
                 if (imgSrc === undefined) {
                     return <span className="text-muted fst-italic">Memuat...</span>

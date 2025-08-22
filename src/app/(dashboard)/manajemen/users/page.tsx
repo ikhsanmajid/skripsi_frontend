@@ -291,7 +291,7 @@ export default function UsersPage() {
                 </Card.Body>
                 {totalRows > 0 && (
                     <Card.Footer className="d-flex flex-wrap justify-content-between align-items-center p-3">
-                        <Pagination<User> table={table} pagination={pagination} pageCount={pageCount} totalRows={totalRows} />
+                        <Pagination<User> table={table} pagination={pagination} pageCount={pageCount} totalRows={totalRows} isLoading={isLoading}/>
                     </Card.Footer>
                 )}
             </Card>

@@ -249,7 +249,7 @@ export default function RoomsPage() {
                 </Card.Body>
                 {totalRows > 0 && (
                     <Card.Footer className="d-flex flex-wrap justify-content-between align-items-center p-3">
-                        <Pagination<Room> table={table} pagination={pagination} totalRows={totalRows} pageCount={pageCount} />
+                        <Pagination<Room> table={table} pagination={pagination} totalRows={totalRows} pageCount={pageCount} isLoading={isLoading} />
                     </Card.Footer>
                 )}
             </Card>

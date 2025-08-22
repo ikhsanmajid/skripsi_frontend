@@ -1,6 +1,6 @@
 import { Table } from "@tanstack/react-table"
 
-export default function Pagination<TData>({ table, pagination, totalRows, pageCount }: { table: Table<TData>, pagination: { pageIndex: number, pageSize: number }, totalRows: number, pageCount: number }) {
+export default function Pagination<TData>({ table, pagination, totalRows, pageCount, isLoading }: { table: Table<TData>, pagination: { pageIndex: number, pageSize: number }, totalRows: number, pageCount: number, isLoading: boolean }) {
     return (<>
         <span className="text-muted small">
             Menampilkan{' '}
@@ -12,12 +12,12 @@ export default function Pagination<TData>({ table, pagination, totalRows, pageCo
 
         <nav className="d-flex align-items-center gap-2">
             <ul className="pagination mb-0">
-                <li className={`page-item ${!table.getCanPreviousPage() ? "disabled" : ""}`}>
+                <li className={`page-item ${!table.getCanPreviousPage() || isLoading ? "disabled" : ""}`}>
                     <button className="page-link" onClick={() => table.setPageIndex(0)}>
                         Awal
                     </button>
                 </li>
-                <li className={`page-item ${!table.getCanPreviousPage() ? "disabled" : ""}`}>
+                <li className={`page-item ${!table.getCanPreviousPage() || isLoading ? "disabled" : ""}`}>
                     <button className="page-link" onClick={() => table.previousPage()}>
                         Sebelumnya
                     </button>
@@ -34,19 +34,19 @@ export default function Pagination<TData>({ table, pagination, totalRows, pageCo
                     const visiblePages = pageList.slice(startIndex, startIndex + 5)
 
                     return visiblePages.map((item) => (
-                        <li key={item} className={`page-item ${currentPage === item ? "active" : ""}`}>
+                        <li key={item} className={`page-item ${currentPage === item ? "active" : ""} ${isLoading ? "disabled" : ""}`}>
                             <button className="page-link" onClick={() => table.setPageIndex(item)}>
                                 {item + 1}
                             </button>
                         </li>
                     ))
                 })()}
-                <li className={`page-item ${!table.getCanNextPage() ? "disabled" : ""}`}>
+                <li className={`page-item ${!table.getCanNextPage()|| isLoading ? "disabled" : ""}`}>
                     <button className="page-link" onClick={() => table.nextPage()}>
                         Berikutnya
                     </button>
                 </li>
-                <li className={`page-item ${!table.getCanNextPage() ? "disabled" : ""}`}>
+                <li className={`page-item ${!table.getCanNextPage() || isLoading ? "disabled" : ""}`}>
                     <button className="page-link" onClick={() => table.setPageIndex(pageCount - 1)}>
                         Akhir
                     </button>

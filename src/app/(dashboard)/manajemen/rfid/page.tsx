@@ -246,7 +246,7 @@ export default function RfidPage() {
                 </Card.Body>
                 {totalRows > 0 && (
                     <Card.Footer className="d-flex flex-wrap justify-content-between align-items-center p-3">
-                        <Pagination<Rfid> table={table} pagination={pagination} pageCount={pageCount} totalRows={totalRows}></Pagination>
+                        <Pagination<Rfid> table={table} pagination={pagination} pageCount={pageCount} totalRows={totalRows} isLoading={isLoading}></Pagination>
                     </Card.Footer>
                 )}
             </Card>
